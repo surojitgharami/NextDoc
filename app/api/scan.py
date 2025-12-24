@@ -131,7 +131,7 @@ async def scan_prescription(
         logger.error(f"OCR service error: {e}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(e)
+            detail="Image processing service error. Please try again later."
         )
     except Exception as e:
         logger.error(f"OCR scan failed: {e}")
@@ -190,7 +190,7 @@ async def scan_pills(
         logger.error(f"Pill detection service error: {e}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(e)
+            detail="Pill detection service error. Please try again later."
         )
     except Exception as e:
         logger.error(f"Pill detection failed: {e}")
@@ -260,7 +260,7 @@ async def scan_skin(
         logger.error(f"Skin detection service error: {e}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(e)
+            detail="Skin analysis service error. Please try again later."
         )
     except Exception as e:
         logger.error(f"Skin analysis failed: {e}")
@@ -318,7 +318,7 @@ async def scan_medical_objects(
         logger.error(f"Medical object detection error: {e}")
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(e)
+            detail="Medical object detection service error. Please try again later."
         )
     except Exception as e:
         logger.error(f"Medical object detection failed: {e}")

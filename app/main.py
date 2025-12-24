@@ -9,6 +9,7 @@ from app.database import Database
 from app.utils.logger import setup_logging
 from app.session_manager import SessionManager
 from app.middleware.rate_limiter import RateLimitMiddleware
+from app.middleware.security_headers import SecurityHeadersMiddleware
 import logging
 import os
 
@@ -107,6 +108,9 @@ app = FastAPI(
 
 # Rate limiting middleware (must be added before CORS)
 app.add_middleware(RateLimitMiddleware)
+
+# Security headers middleware (adds X-Frame-Options, X-Content-Type-Options, etc.)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # CORS middleware
 app.add_middleware(
