@@ -37,7 +37,7 @@ class SessionSummary(BaseModel):
     user_id: str
     session_name: Optional[str] = Field(None, description="User-editable session name")
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime] = None
     message_count: int
     preview: Optional[str] = Field(None, description="First user message preview")
     summary: Optional[str] = Field(None, description="AI-generated session summary")

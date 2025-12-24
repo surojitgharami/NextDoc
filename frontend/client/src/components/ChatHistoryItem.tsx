@@ -107,11 +107,6 @@ export default function ChatHistoryItem({
                     <span className="truncate text-sm flex-1" data-testid={`text-chat-title-${id}`}>
                       {title}
                     </span>
-                    {messageCount > 0 && (
-                      <span className="text-xs text-muted-foreground flex-shrink-0">
-                        {messageCount}
-                      </span>
-                    )}
                   </div>
                 </SidebarMenuButton>
               </TooltipTrigger>

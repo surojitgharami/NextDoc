@@ -387,12 +387,13 @@ async def get_sessions(
     session_summaries = []
     for session in sessions:
         try:
+            created_at = session.get("created_at", datetime.utcnow())
             summary = SessionSummary(
                 session_id=session["session_id"],
                 user_id=session["user_id"],
                 session_name=session.get("session_name"),
-                created_at=session["created_at"],
-                updated_at=session["updated_at"],
+                created_at=created_at,
+                updated_at=session.get("updated_at", created_at),
                 message_count=session.get("message_count", 0),
                 preview=session.get("preview"),
                 summary=session.get("summary"),

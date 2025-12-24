@@ -94,7 +94,7 @@ export default function ChatWithHistory({
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportingMessage, setReportingMessage] = useState<{ id: string; content: string } | null>(null);
 
-  const { data: sessionsData, refetch: refetchSessions } = useChatSessions(false);
+  const { data: sessionsData, refetch: refetchSessions } = useChatSessions(true);
   const renameMutation = useRenameChatSession();
   const pinMutation = usePinChatSession();
   const deleteMutation = useDeleteChatSession();
