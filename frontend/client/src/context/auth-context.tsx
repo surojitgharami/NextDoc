@@ -207,7 +207,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Redirect admin users to admin dashboard
       if (userData.roles?.includes('admin')) {
-        window.location.href = '/dashboard/admin';
+        window.location.href = '/admin';
       }
     }
   }, [saveTokens, saveUser]);

@@ -115,28 +115,28 @@ export default function Profile() {
             <MenuItem
               icon={<BarChart3 className="w-5 h-5" />}
               label="System Reports"
-              onClick={() => setLocation("/dashboard/admin/reports")}
+              onClick={() => setLocation("/admin/reports")}
               testId="menu-reports"
             />
             
             <MenuItem
               icon={<Users className="w-5 h-5" />}
               label="User Management"
-              onClick={() => setLocation("/dashboard/admin/users")}
+              onClick={() => setLocation("/admin/user-management")}
               testId="menu-user-management"
             />
             
             <MenuItem
               icon={<Bell className="w-5 h-5" />}
               label="Notifications"
-              onClick={() => setLocation("/dashboard/admin/notifications")}
+              onClick={() => setLocation("/admin/notifications")}
               testId="menu-admin-notifications"
             />
             
             <MenuItem
               icon={<Lock className="w-5 h-5" />}
               label="Settings"
-              onClick={() => setLocation("/dashboard/admin/settings")}
+              onClick={() => setLocation("/admin/settings")}
               testId="menu-admin-settings"
             />
           </div>

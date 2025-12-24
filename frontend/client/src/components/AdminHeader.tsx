@@ -77,7 +77,7 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
           <Button
             size="icon"
             variant="ghost"
-            onClick={() => setLocation("/dashboard/admin/settings")}
+            onClick={() => setLocation("/admin/settings")}
           >
             <Settings className="w-5 h-5" />
           </Button>
@@ -102,7 +102,7 @@ export function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                 </span>
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => setLocation("/dashboard/admin/settings")}>
+              <DropdownMenuItem onClick={() => setLocation("/admin/settings")}>
                 <Settings className="w-4 h-4 mr-2" />
                 Admin Settings
               </DropdownMenuItem>
