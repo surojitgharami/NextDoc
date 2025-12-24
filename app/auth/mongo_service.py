@@ -180,7 +180,9 @@ class MongoAuthService:
         users = []
         async for user in cursor:
             user['id'] = str(user['_id'])
-            del user['password_hash']
+            # Safely remove sensitive fields (may not exist in all documents)
+            user.pop('password_hash', None)
+            user.pop('hashed_password', None)
             users.append(user)
         
         return users, total
