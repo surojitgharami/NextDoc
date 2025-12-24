@@ -30,15 +30,8 @@
 - **Pill Identifier** - Identify pills using AI vision
 - **Subscription Plans** - Monthly/annual subscription with Razorpay
 
-### 👨‍⚕️ Doctor Features *(Coming Soon)*
-- Doctor Dashboard
-- Patient Management
-- Appointment Scheduling
-- Prescription Writing
-- Earnings Analytics
-
 ### 🔐 Admin Features
-- **User Management** - Manage patients and doctors
+- **User Management** - Manage all users
 - **Admin Dashboard** - System-wide KPIs and metrics
 - **Message Reports** - Review reported messages
 - **Content Management** - Manage platform content
