@@ -13,6 +13,8 @@ class ChatMessageRequest(BaseModel):
 
 class ChatMessageResponse(BaseModel):
     """Response schema for chat message"""
+    model_config = {"protected_namespaces": ()}
+    
     reply: str = Field(..., description="AI's response")
     session_id: str = Field(..., description="Session ID for conversation continuity")
     thinking: Optional[str] = Field(None, description="AI's reasoning process")
