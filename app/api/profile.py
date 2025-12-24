@@ -243,12 +243,27 @@ async def upload_profile_photo(
             detail=f"Invalid file type. Allowed: {', '.join(allowed_extensions)}"
         )
     
-    # Generate unique filename
-    unique_id = str(uuid.uuid4())
-    filename = f"{actual_user_id}_{unique_id}{file_ext}"
-    file_path = PROFILE_PHOTOS_DIR / filename
-    
     try:
+        # Get existing profile to check for old avatar
+        existing_profile = await db.userProfile.find_one({"userId": actual_user_id})
+        old_avatar_url = existing_profile.get("avatarUrl") if existing_profile else None
+        
+        # Delete old photo file if exists
+        if old_avatar_url and old_avatar_url.startswith("/uploads/profile-photos/"):
+            old_filename = old_avatar_url.replace("/uploads/profile-photos/", "")
+            old_file_path = PROFILE_PHOTOS_DIR / old_filename
+            if old_file_path.exists():
+                try:
+                    old_file_path.unlink()
+                    logger.info(f"🗑️ Deleted old profile photo: {old_filename}")
+                except Exception as del_err:
+                    logger.warning(f"⚠️ Could not delete old photo: {del_err}")
+        
+        # Generate unique filename
+        unique_id = str(uuid.uuid4())
+        filename = f"{actual_user_id}_{unique_id}{file_ext}"
+        file_path = PROFILE_PHOTOS_DIR / filename
+        
         # Save file
         async with aiofiles.open(file_path, "wb") as f:
             await f.write(file_content)
@@ -261,6 +276,12 @@ async def upload_profile_photo(
             {"userId": actual_user_id},
             {"$set": {"avatarUrl": photo_url, "updatedAt": utc_now()}},
             upsert=True
+        )
+        
+        # Also update users collection for consistency
+        await db.users.update_one(
+            {"_id": ObjectId(actual_user_id)},
+            {"$set": {"avatar_url": photo_url, "updated_at": utc_now()}}
         )
         
         logger.info(f"✅ Profile photo uploaded: {filename}")
