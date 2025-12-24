@@ -1,4 +1,4 @@
-import { Plus, Search, ChevronDown, Pin } from "lucide-react";
+import { Plus, Search, ChevronDown, Pin, Stethoscope } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
@@ -166,8 +166,8 @@ function AppSidebarChatContent({
       {!isCollapsed && (
         <SidebarHeader className="p-4 space-y-3">
           <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 bg-foreground text-background rounded-md flex items-center justify-center font-bold text-lg">
-              C
+            <div className="w-8 h-8 bg-primary text-primary-foreground rounded-md flex items-center justify-center">
+              <Stethoscope className="w-5 h-5" />
             </div>
           </div>
 

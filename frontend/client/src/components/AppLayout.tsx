@@ -63,7 +63,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </Button>
 
-          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent flex-1 text-center">CareBot</h1>
+          <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent flex-1 text-center">NextDoc</h1>
 
           <div className="flex items-center gap-2 ml-4">
             <Popover open={notificationOpen} onOpenChange={setNotificationOpen}>
@@ -137,7 +137,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
             <div className="mt-auto p-4 border-t border-border/50 bg-muted/30">
               <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5">
                 <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                  <span className="text-xs font-bold text-primary">CareBot</span>
+                  <span className="text-xs font-bold text-primary">NextDoc</span>
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs font-semibold text-foreground truncate">Healthcare Assistant</p>

@@ -34,7 +34,7 @@ export default function PrivacyPolicy() {
         {/* Introduction */}
         <section>
           <p className="text-muted-foreground leading-relaxed">
-            At CareBot, we take your privacy seriously. This Privacy Policy explains how we collect, use, 
+            At NextDoc, we take your privacy seriously. This Privacy Policy explains how we collect, use, 
             protect, and share your personal and health information when you use our healthcare services. 
             We are committed to maintaining the highest standards of data protection and transparency.
           </p>
@@ -296,11 +296,11 @@ export default function PrivacyPolicy() {
               <p className="text-sm text-muted-foreground mt-4">
                 To exercise any of these rights, contact us at{" "}
                 <a 
-                  href="mailto:privacy@carebot.com" 
+                  href="mailto:privacy@NextDoc.com" 
                   className="text-primary hover:underline"
                   data-testid="link-privacy-email"
                 >
-                  privacy@carebot.com
+                  privacy@NextDoc.com
                 </a>
               </p>
             </div>
@@ -337,15 +337,15 @@ export default function PrivacyPolicy() {
         <Card className="p-6">
           <h2 className="text-lg font-semibold mb-3">Children's Privacy</h2>
           <p className="text-muted-foreground">
-            CareBot is not intended for children under 13 years of age. We do not knowingly collect personal 
+            NextDoc is not intended for children under 13 years of age. We do not knowingly collect personal 
             information from children under 13. If you believe a child has provided us with personal information, 
             please contact us immediately at{" "}
             <a 
-              href="mailto:privacy@carebot.com" 
+              href="mailto:privacy@NextDoc.com" 
               className="text-primary hover:underline"
               data-testid="link-children-privacy-email"
             >
-              privacy@carebot.com
+              privacy@nextdoc.com
             </a>
             , and we will delete it promptly.
           </p>
@@ -357,7 +357,7 @@ export default function PrivacyPolicy() {
           <p className="text-muted-foreground">
             We may update this Privacy Policy from time to time to reflect changes in our practices or legal 
             requirements. We will notify you of any material changes by email and prominently posting a notice 
-            in the app. Your continued use of CareBot after such changes constitutes acceptance of the updated policy.
+            in the app. Your continued use of NextDoc after such changes constitutes acceptance of the updated policy.
           </p>
         </Card>
 
@@ -371,21 +371,21 @@ export default function PrivacyPolicy() {
             <p>
               <strong>Email:</strong>{" "}
               <a 
-                href="mailto:privacy@carebot.com" 
+                href="mailto:privacy@nextdoc.com" 
                 className="text-primary hover:underline"
                 data-testid="link-contact-privacy-email"
               >
-                privacy@carebot.com
+                privacy@NextDoc.com
               </a>
             </p>
             <p>
               <strong>Support:</strong>{" "}
               <a 
-                href="mailto:support@carebot.com" 
+                href="mailto:support@nextdoc.com" 
                 className="text-primary hover:underline"
                 data-testid="link-contact-support-email"
               >
-                support@carebot.com
+                support@NextDoc.com
               </a>
             </p>
             <p className="text-muted-foreground pt-2">

@@ -191,7 +191,7 @@ export default function Settings() {
           </Button>
           <div>
             <h1 className="text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-400 bg-clip-text text-transparent">Settings</h1>
-            <p className="text-sm text-muted-foreground">Customize your CareBot experience</p>
+            <p className="text-sm text-muted-foreground">Customize your NextDoc experience</p>
           </div>
         </div>
 
@@ -207,7 +207,7 @@ export default function Settings() {
                 <div className="text-left">
                   <div className="font-semibold text-foreground">Appearance</div>
                   <p className="text-xs text-muted-foreground font-normal">
-                    Customize how CareBot looks on your device
+                    Customize how NextDoc looks on your device
                   </p>
                 </div>
               </div>
@@ -548,7 +548,7 @@ export default function Settings() {
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
                               <h4 className="font-medium">Tips and tutorials</h4>
-                              <p className="text-sm text-muted-foreground">Tips on getting more out of CareBot.</p>
+                              <p className="text-sm text-muted-foreground">Tips on getting more out of NextDoc.</p>
                             </div>
                             <Switch
                               checked={notificationSettings?.tipsAndTutorials ?? false}

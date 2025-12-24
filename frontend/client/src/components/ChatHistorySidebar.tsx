@@ -1,7 +1,7 @@
 import { useUser } from "@/context/auth-context";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Conversation, GroupedConversations } from "@shared/schema";
+import type { GroupedConversations } from "@shared/schema";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import {
@@ -12,7 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { MessageSquare, MoreVertical, Trash2, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useMemo } from "react";
 
 interface ChatHistorySidebarProps {
   onConversationSelect?: (conversationId: string) => void;
@@ -27,38 +26,10 @@ export default function ChatHistorySidebar({
 }: ChatHistorySidebarProps) {
   const { user } = useUser();
 
-  // Fetch flat list of conversations from backend
-  const { data: conversations, isLoading, error } = useQuery<Conversation[]>({
+  const { data: groupedConversations, isLoading, error } = useQuery<GroupedConversations>({
     queryKey: user?.id ? [`/api/conversations?userId=${user.id}`] : ['conversations-disabled'],
     enabled: !!user?.id,
   });
-
-  // Group conversations by time period (like AppSidebarChat does)
-  const groupedConversations = useMemo<GroupedConversations>(() => {
-    if (!conversations || !Array.isArray(conversations)) {
-      return { today: [], previous7Days: [], previous30Days: [] };
-    }
-
-    const now = new Date();
-    const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-    // Filter out deleted conversations
-    const activeConversations = conversations.filter(conv => conv.isDeleted !== "true");
-
-    const today = activeConversations.filter(
-      (conv) => new Date(conv.createdAt) > oneDayAgo
-    );
-    const previous7Days = activeConversations.filter(
-      (conv) => new Date(conv.createdAt) <= oneDayAgo && new Date(conv.createdAt) > sevenDaysAgo
-    );
-    const previous30Days = activeConversations.filter(
-      (conv) => new Date(conv.createdAt) <= sevenDaysAgo && new Date(conv.createdAt) > thirtyDaysAgo
-    );
-
-    return { today, previous7Days, previous30Days };
-  }, [conversations]);
 
   const toggleFavoriteMutation = useMutation({
     mutationFn: async (conversationId: string) => {

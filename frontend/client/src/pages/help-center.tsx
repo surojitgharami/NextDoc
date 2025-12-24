@@ -136,7 +136,7 @@ export default function HelpCenter() {
                   className="text-primary font-medium hover:underline"
                   data-testid="button-open-contact-form"
                 >
-                  support@carebot.com
+                  support@NextDoc.com
                 </button>
               </div>
             </div>

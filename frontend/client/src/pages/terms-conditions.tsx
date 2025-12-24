@@ -34,7 +34,7 @@ export default function TermsAndConditions() {
               Terms & Conditions
             </h1>
             <p className="text-sm text-muted-foreground mt-1">
-              CareBot Terms & Conditions for using our healthcare services.
+              NextDoc Terms & Conditions for using our healthcare services.
             </p>
           </div>
           <Button
@@ -68,9 +68,9 @@ export default function TermsAndConditions() {
           >
             <TabsContent value="general" className="mt-0 space-y-6">
               <section>
-                <h2 className="text-lg font-semibold mb-3">About CareBot</h2>
+                <h2 className="text-lg font-semibold mb-3">About NextDoc</h2>
                 <p className="text-muted-foreground leading-relaxed">
-                  At CareBot, we believe healthcare should be accessible and personalized. That's why we've
+                  At NextDoc, we believe healthcare should be accessible and personalized. That's why we've
                   created an AI-powered health assistant to provide you with reliable health information,
                   symptom checking, and appointment booking. Let us help you take control of your health
                   journey with confidence.
@@ -78,7 +78,7 @@ export default function TermsAndConditions() {
               </section>
 
               <section>
-                <h2 className="text-lg font-semibold mb-4">Key Features CareBot</h2>
+                <h2 className="text-lg font-semibold mb-4">Key Features NextDoc</h2>
                 <div className="space-y-4">
                   <div className="flex gap-4">
                     <div className="flex-shrink-0 w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -135,11 +135,11 @@ export default function TermsAndConditions() {
                 <p className="text-sm text-muted-foreground">
                   Contact our customer service team at{" "}
                   <a 
-                    href="mailto:support@carebot.com" 
+                    href="mailto:support@nextdoc.com" 
                     className="text-primary hover:underline"
                     data-testid="link-support-email-general"
                   >
-                    support@carebot.com
+                    support@nextdoc.com
                   </a>
                 </p>
               </section>
@@ -149,7 +149,7 @@ export default function TermsAndConditions() {
               <section>
                 <h2 className="text-lg font-semibold mb-3">Appointment Booking Terms</h2>
                 <p className="text-muted-foreground leading-relaxed mb-4">
-                  When you book an appointment through CareBot, you agree to the following terms and conditions.
+                  When you book an appointment through NextDoc, you agree to the following terms and conditions.
                 </p>
               </section>
 
@@ -265,11 +265,11 @@ export default function TermsAndConditions() {
                   For urgent cancellations or special circumstances, please contact our support team
                   at{" "}
                   <a 
-                    href="mailto:support@carebot.com" 
+                    href="mailto:support@nextdoc.com" 
                     className="text-primary hover:underline"
                     data-testid="link-support-email-cancellations"
                   >
-                    support@carebot.com
+                    support@nextdoc.com
                   </a>
                   .
                 </p>
