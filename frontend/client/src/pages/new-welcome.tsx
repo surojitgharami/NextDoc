@@ -37,13 +37,13 @@ export default function NewWelcome() {
             <span>Powered by AI</span>
           </div>
           <h1 className="text-4xl font-bold tracking-tight">
-            Your Virtual
+            Welcome to
           </h1>
           <h2 className="text-4xl font-bold text-primary tracking-tight">
-            Healthcare Chatbot
+            NextDoc
           </h2>
           <p className="text-muted-foreground max-w-sm mx-auto">
-            Your Virtual Healthcare Assistant: Partner in wellness, just a message away.
+            Your AI Healthcare Assistant: Expert medical guidance, just a message away.
           </p>
         </div>
 

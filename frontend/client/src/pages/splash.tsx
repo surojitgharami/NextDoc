@@ -25,9 +25,9 @@ function SplashContent() {
         </div>
         <div className="space-y-2">
           <h1 className="text-4xl font-bold text-white tracking-tight">
-            CareBot
+            NextDoc
           </h1>
-          <p className="text-primary-foreground/90 text-sm">Your Healthcare Assistant</p>
+          <p className="text-primary-foreground/90 text-sm">AI Healthcare Assistant</p>
         </div>
       </div>
     </div>
@@ -49,9 +49,9 @@ export default function Splash() {
           </div>
           <div className="space-y-2">
             <h1 className="text-4xl font-bold text-white tracking-tight">
-              CareBot
+              NextDoc
             </h1>
-            <p className="text-primary-foreground/90 text-sm">Your Healthcare Assistant</p>
+            <p className="text-primary-foreground/90 text-sm">AI Healthcare Assistant</p>
           </div>
         </div>
       </div>
