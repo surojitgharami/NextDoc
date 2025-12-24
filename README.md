@@ -19,7 +19,7 @@
 
 ## 🌟 Features
 
-### 👤 Patient Features
+### 👤 User Features
 - **AI Doctor Chat** - AI-powered medical consultation with DeepSeek R1
 - **Symptom Checker** - Intelligent symptom analysis
 - **Medicine Reminders** - Track medications and set reminders
