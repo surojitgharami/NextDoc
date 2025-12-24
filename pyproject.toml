@@ -1,0 +1,23 @@
+[project]
+name = "ai-doctor-backend"
+version = "3.0.0"
+description = "AI Doctor 3.0 - Medical Chatbot Backend"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "gunicorn",
+    "pydantic",
+    "pydantic-settings",
+    "python-dotenv",
+    "motor",
+    "pymongo<4.10",
+    "PyJWT",
+    "cryptography",
+    "httpx",
+    "openai",
+    "python-multipart",
+    "aiofiles",
+    "email-validator",
+    "requests",
+]

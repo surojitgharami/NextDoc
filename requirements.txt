@@ -1,0 +1,34 @@
+# FastAPI Framework
+fastapi
+uvicorn[standard]
+gunicorn
+
+# Pydantic & Settings
+pydantic
+pydantic-settings
+python-dotenv
+
+# Database
+motor
+pymongo<4.10
+
+# Authentication
+PyJWT
+cryptography
+httpx
+
+# OpenAI SDK (OpenRouter compatible)
+openai
+
+# Utilities
+python-multipart
+aiofiles
+email-validator
+requests
+asyncpg
+bcrypt
+passlib
+
+# Payment Processing
+razorpay
+pyjwt
