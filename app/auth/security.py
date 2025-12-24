@@ -12,7 +12,11 @@ logger = logging.getLogger(__name__)
 
 BCRYPT_ROUNDS = 12
 
-JWT_SECRET = os.getenv("JWT_SECRET", secrets.token_urlsafe(32))
+# JWT Configuration - WARNING: Set JWT_SECRET in production!
+_jwt_secret_from_env = os.getenv("JWT_SECRET")
+if not _jwt_secret_from_env:
+    logger.warning("⚠️ JWT_SECRET not set! Using random secret. This will invalidate tokens on restart.")
+JWT_SECRET = _jwt_secret_from_env or secrets.token_urlsafe(32)
 JWT_ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 15
 REFRESH_TOKEN_EXPIRE_DAYS = 30
