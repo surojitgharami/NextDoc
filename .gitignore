@@ -101,9 +101,6 @@ uploads/
 */uploads/
 attached_assets/
 
-# Mobile app (excluded from repository)
-mobile-app/
-
 # Image processor (separate service)
 image-processor/
 
