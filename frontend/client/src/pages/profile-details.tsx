@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useUser, useAuth } from "@/context/auth-context";
-import { ArrowLeft, Camera, Droplet, Activity, Edit2 } from "lucide-react";
+import { ArrowLeft, Camera, Droplet, Activity, Edit2, Save, User, Mail, Phone, Calendar, Ruler } from "lucide-react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +9,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { motion } from "framer-motion";
 
 interface UserProfile {
   userId: string;
@@ -39,7 +40,9 @@ const profileFormSchema = z.object({
   fullName: z.string().min(1, "Full name is required"),
   dateOfBirth: z.string().optional(),
   gender: z.enum(['male', 'female']).optional(),
-  phone: z.string().optional(),
+  phone: z.string().optional().refine(val => !val || /^\d{10}$/.test(val), {
+    message: "Phone number must be exactly 10 digits"
+  }),
   email: z.string().email("Invalid email").optional(),
   weightKg: z.string().optional().refine(
     (val) => !val || (!isNaN(Number(val)) && Number(val) > 0),
@@ -227,15 +230,63 @@ export default function ProfileDetails() {
         await uploadPhotoMutation.mutateAsync(selectedFile);
       }
       
-      // Convert empty strings to null for numeric fields
-      const profileData = {
-        ...data,
-        weightKg: data.weightKg ? parseFloat(data.weightKg) : null,
-        heightCm: data.heightCm ? parseFloat(data.heightCm) : null,
-      };
+      // Determine what has changed manually
+      let dataToSubmit: Partial<ProfileFormData> = {};
+      
+      if (profileData) {
+         // Compare each field manually to safely detect changes, including Blood Group
+         // which might not trigger dirty state perfectly from modal
+         const currentValues = form.getValues();
+         
+         const hasChanged = (key: keyof ProfileFormData, originalValue: any) => {
+            const currentValue = currentValues[key];
+            // Handle null/undefined checks loosely
+            if (!originalValue && !currentValue) return false;
+            // Handle number conversions
+            if (key === 'weightKg' || key === 'heightCm') {
+                return String(originalValue || '') !== String(currentValue || '');
+            }
+            return originalValue !== currentValue;
+         };
+
+         if (hasChanged('fullName', profileData.fullName)) dataToSubmit.fullName = data.fullName;
+         if (hasChanged('dateOfBirth', profileData.dateOfBirth)) dataToSubmit.dateOfBirth = data.dateOfBirth;
+         if (hasChanged('gender', profileData.gender)) dataToSubmit.gender = data.gender;
+         if (hasChanged('phone', profileData.phone)) dataToSubmit.phone = data.phone;
+         if (hasChanged('bloodGroup', profileData.bloodGroup)) dataToSubmit.bloodGroup = data.bloodGroup;
+         if (hasChanged('weightKg', profileData.weightKg)) dataToSubmit.weightKg = data.weightKg;
+         if (hasChanged('heightCm', profileData.heightCm)) dataToSubmit.heightCm = data.heightCm;
+
+         // If nothing changed and no file selected, return
+         if (Object.keys(dataToSubmit).length === 0 && !selectedFile) {
+            return;
+         }
+         
+         // If only file changed, we are done
+         if (Object.keys(dataToSubmit).length === 0) {
+             return;
+         }
+
+      } else {
+        // No existing profile, send everything
+        dataToSubmit = data;
+      }
+
+      // Convert empty strings to null for numeric fields and prepare payload
+      const payload: any = { ...dataToSubmit };
+      
+      if ('weightKg' in payload) {
+        payload.weightKg = payload.weightKg ? parseFloat(String(payload.weightKg)) : null;
+      }
+      
+      if ('heightCm' in payload) {
+        payload.heightCm = payload.heightCm ? parseFloat(String(payload.heightCm)) : null;
+      }
       
       // Then update profile
-      await updateProfileMutation.mutateAsync(profileData as ProfileFormData);
+      if (Object.keys(payload).length > 0) {
+        await updateProfileMutation.mutateAsync(payload as ProfileFormData);
+      }
     } catch (error) {
       console.error('Profile update error:', error);
     }
@@ -253,60 +304,80 @@ export default function ProfileDetails() {
   };
 
   const handleMetricEdit = (metric: 'bloodGroup' | 'weight') => {
+    const newValue = metric === 'bloodGroup' 
+      ? (form.getValues('bloodGroup') || '') 
+      : (form.getValues('weightKg') || '');
+    setEditValue(newValue);
     setEditingMetric(metric);
-    if (metric === 'bloodGroup') {
-      setEditValue(form.getValues('bloodGroup') || '');
-    } else {
-      setEditValue(form.getValues('weightKg') || '');
-    }
   };
 
   const handleMetricSave = () => {
     if (editingMetric === 'bloodGroup') {
-      form.setValue('bloodGroup', editValue);
+      form.setValue('bloodGroup', editValue, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
     } else if (editingMetric === 'weight') {
-      form.setValue('weightKg', editValue);
+      form.setValue('weightKg', editValue, { shouldDirty: true, shouldTouch: true, shouldValidate: true });
     }
     setEditingMetric(null);
+    setEditValue('');
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24">
-      <div className="max-w-2xl mx-auto">
+    <div className="min-h-screen bg-background pb-24 relative overflow-hidden">
+        {/* Background Decorative Elements */}
+        <div className="absolute top-0 left-0 w-full h-80 bg-primary/5 rounded-b-[40%] blur-3xl -z-10" />
+        <div className="absolute top-20 right-10 w-64 h-64 bg-primary/10 rounded-full blur-3xl -z-10 animate-pulse" />
+
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="max-w-3xl mx-auto"
+      >
         {/* Header */}
-        <header className="sticky top-0 z-10 bg-gradient-to-r from-background to-background/95 backdrop-blur-sm border-b px-4 py-3 shadow-sm">
-          <div className="flex items-center gap-4">
+        <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-md border-b px-6 py-4 flex items-center gap-4">
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setLocation("/dashboard")}
-              className="rounded-xl hover:bg-primary/10 transition-colors"
+              className="rounded-full hover:bg-primary/10 hover:text-primary transition-all duration-300"
               data-testid="button-back"
             >
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <h1 className="text-xl font-semibold">Personal Information</h1>
-          </div>
+            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/60">
+                Personal Information
+            </h1>
         </header>
 
-        <div className="px-4 py-8 space-y-6">
+        <div className="px-6 py-8 space-y-8">
           {/* Avatar Section */}
-          <div className="flex justify-center">
-            <div className="relative">
-              <Avatar className="w-32 h-32 border-4 border-primary/20 ring-4 ring-primary/10 shadow-lg">
-                <AvatarImage src={currentAvatar} />
-                <AvatarFallback className="text-4xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground font-bold">
-                  {getInitials()}
-                </AvatarFallback>
-              </Avatar>
-              <Button
-                size="icon"
-                className="absolute bottom-0 right-0 rounded-full w-10 h-10 bg-gradient-to-r from-primary to-primary/80 shadow-lg hover:from-primary/90 hover:to-primary/70 transition-all duration-200"
-                onClick={() => document.getElementById('avatar-upload')?.click()}
-                data-testid="button-change-photo"
+          <div className="flex justify-center py-4">
+            <div className="relative group">
+               <motion.div
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20 }}
+               >
+                  <Avatar className="w-40 h-40 border-4 border-background ring-4 ring-primary/20 shadow-xl">
+                    <AvatarImage src={currentAvatar} className="object-cover" />
+                    <AvatarFallback className="text-5xl bg-gradient-to-br from-primary to-primary/60 text-primary-foreground font-bold">
+                      {getInitials()}
+                    </AvatarFallback>
+                  </Avatar>
+              </motion.div>
+              <motion.div 
+                whileHover={{ scale: 1.1 }}
+                whileTap={{ scale: 0.9 }}
+                className="absolute bottom-1 right-2"
               >
-                <Camera className="w-5 h-5" />
-              </Button>
+                  <Button
+                    size="icon"
+                    className="rounded-full w-12 h-12 bg-primary text-primary-foreground shadow-lg border-4 border-background hover:bg-primary/90 transition-all duration-200"
+                    onClick={() => document.getElementById('avatar-upload')?.click()}
+                    data-testid="button-change-photo"
+                  >
+                    <Camera className="w-5 h-5" />
+                  </Button>
+              </motion.div>
               <input
                 id="avatar-upload"
                 type="file"
@@ -318,87 +389,83 @@ export default function ProfileDetails() {
             </div>
           </div>
 
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Health Monitoring Section */}
-            <Card className="p-6 border-0 shadow-sm bg-gradient-to-br from-card to-card/50 space-y-4">
-              <h3 className="font-semibold text-lg">Health Monitoring</h3>
-              
-              <div className="grid grid-cols-2 gap-4">
-                {/* Blood Group Card */}
-                <div 
-                  className="bg-gradient-to-br from-pink-50 via-pink-50 to-red-50 dark:from-pink-950 dark:via-pink-900 dark:to-red-900 rounded-xl p-5 cursor-pointer hover-elevate active-elevate-2 transition-all duration-300 border-0 shadow-sm group"
-                  onClick={() => handleMetricEdit('bloodGroup')}
-                  data-testid="card-blood-group"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 rounded-lg bg-white/30 dark:bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <Droplet className="w-6 h-6 text-pink-600 dark:text-pink-300" />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMetricEdit('bloodGroup');
-                      }}
-                      className="p-2 rounded-lg hover:bg-white/20 dark:hover:bg-white/10 transition-colors"
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+            
+            {/* Health Stats Grid */}
+            <div className="grid grid-cols-2 gap-5">
+                 {/* Blood Group Card */}
+                 <motion.div
+                    whileHover={{ y: -5 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                 >
+                    <Card 
+                      className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-pink-50 to-white dark:from-pink-950/30 dark:to-background cursor-pointer hover:shadow-pink-100 dark:hover:shadow-pink-900/20 transition-all duration-300"
+                      onClick={() => handleMetricEdit('bloodGroup')}
                     >
-                      <Edit2 className="w-4 h-4 text-foreground/70" />
-                    </button>
-                  </div>
-                  <p className="text-xs font-medium text-foreground/70 mb-2">Blood Group</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {form.getValues('bloodGroup') || '-'}
-                  </p>
-                </div>
+                        <CardContent className="p-5 flex flex-col h-full justify-between relative">
+                            <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <Edit2 className="w-4 h-4 text-pink-400" />
+                            </div>
+                           <div className="flex items-center gap-3 mb-3">
+                               <div className="p-2.5 rounded-xl bg-pink-100 text-pink-600 dark:bg-pink-900/50 dark:text-pink-400">
+                                   <Droplet className="w-6 h-6" />
+                               </div>
+                               <span className="font-medium text-pink-900 dark:text-pink-100/80">Blood Group</span>
+                           </div>
+                           <p className="text-3xl font-bold text-gray-800 dark:text-gray-100">
+                               {form.watch('bloodGroup') || '-'}
+                           </p>
+                        </CardContent>
+                    </Card>
+                 </motion.div>
 
-                {/* Weight Card */}
-                <div 
-                  className="bg-gradient-to-br from-emerald-50 via-emerald-50 to-teal-50 dark:from-emerald-950 dark:via-emerald-900 dark:to-teal-900 rounded-xl p-5 cursor-pointer hover-elevate active-elevate-2 transition-all duration-300 border-0 shadow-sm group"
-                  onClick={() => handleMetricEdit('weight')}
-                  data-testid="card-weight"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className="w-12 h-12 rounded-lg bg-white/30 dark:bg-white/10 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
-                      <Activity className="w-6 h-6 text-emerald-600 dark:text-emerald-300" />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleMetricEdit('weight');
-                      }}
-                      className="p-2 rounded-lg hover:bg-white/20 dark:hover:bg-white/10 transition-colors"
-                    >
-                      <Edit2 className="w-4 h-4 text-foreground/70" />
-                    </button>
-                  </div>
-                  <p className="text-xs font-medium text-foreground/70 mb-2">Weight</p>
-                  <p className="text-2xl font-bold text-foreground">
-                    {form.getValues('weightKg') ? `${form.getValues('weightKg')} kg` : '-'}
-                  </p>
-                </div>
-              </div>
-            </Card>
+                 {/* Weight Card */}
+                 <motion.div
+                    whileHover={{ y: -5 }}
+                    transition={{ type: "spring", stiffness: 300 }}
+                 >
+                     <Card 
+                       className="overflow-hidden border-0 shadow-lg bg-gradient-to-br from-emerald-50 to-white dark:from-emerald-950/30 dark:to-background cursor-pointer hover:shadow-emerald-100 dark:hover:shadow-emerald-900/20 transition-all duration-300"
+                       onClick={() => handleMetricEdit('weight')}
+                     >
+                        <CardContent className="p-5 flex flex-col h-full justify-between">
+                           <div className="flex items-center gap-3 mb-3">
+                               <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/50 dark:text-emerald-400">
+                                   <Activity className="w-6 h-6" />
+                               </div>
+                               <span className="font-medium text-emerald-900 dark:text-emerald-100/80">Weight</span>
+                           </div>
+                           <p className="text-3xl font-bold text-gray-800 dark:text-gray-100">
+                               {form.watch('weightKg') ? `${form.watch('weightKg')} kg` : '-'}
+                           </p>
+                        </CardContent>
+                    </Card>
+                 </motion.div>
+            </div>
 
             {/* Edit Metric Dialog */}
             <Dialog open={editingMetric !== null} onOpenChange={(open) => !open && setEditingMetric(null)}>
-              <DialogContent>
+              <DialogContent className="sm:max-w-md rounded-2xl" aria-describedby="dialog-description">
                 <DialogHeader>
                   <DialogTitle>
-                    {editingMetric === 'bloodGroup' ? 'Edit Blood Group' : 'Edit Weight'}
+                    {editingMetric === 'bloodGroup' ? 'Update Blood Group' : 'Update Weight'}
                   </DialogTitle>
+                   <p id="dialog-description" className="text-sm text-muted-foreground">
+                      {editingMetric === 'bloodGroup' 
+                        ? 'Select your blood group from the list below.' 
+                        : 'Enter your current weight in kilograms.'}
+                    </p>
                 </DialogHeader>
                 
-                <div className="space-y-4">
+                <div className="py-4">
                   {editingMetric === 'bloodGroup' ? (
-                    <div className="space-y-2">
-                      <Label htmlFor="blood-group-input">Blood Group</Label>
+                    <div className="space-y-3">
+                      <Label htmlFor="blood-group-input" className="text-sm font-medium text-muted-foreground">Select Blood Group</Label>
                       <select
                         id="blood-group-input"
                         value={editValue}
                         onChange={(e) => setEditValue(e.target.value)}
-                        className="w-full px-3 py-2 border border-input rounded-md bg-background"
-                        data-testid="select-blood-group"
+                        className="w-full h-12 px-4 rounded-xl border border-input bg-background focus:ring-2 focus:ring-primary/20 outline-none transition-all"
                       >
                         <option value="">Select Blood Group</option>
                         <option value="A+">A+</option>
@@ -412,163 +479,176 @@ export default function ProfileDetails() {
                       </select>
                     </div>
                   ) : (
-                    <div className="space-y-2">
-                      <Label htmlFor="weight-input">Weight (kg)</Label>
-                      <Input
-                        id="weight-input"
-                        type="number"
-                        step="0.1"
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        placeholder="Enter weight in kg"
-                        data-testid="input-weight-edit"
-                      />
+                    <div className="space-y-3">
+                      <Label htmlFor="weight-input" className="text-sm font-medium text-muted-foreground">Weight (kg)</Label>
+                      <div className="relative">
+                          <Input
+                            id="weight-input"
+                            type="number"
+                            step="0.1"
+                            value={editValue}
+                            onChange={(e) => setEditValue(e.target.value)}
+                            className="h-12 pl-4 pr-12 rounded-xl text-lg font-medium"
+                            placeholder="0.0"
+                          />
+                          <span className="absolute right-4 top-3 text-muted-foreground font-medium">kg</span>
+                      </div>
                     </div>
                   )}
                 </div>
 
-                <DialogFooter>
-                  <Button variant="outline" onClick={() => setEditingMetric(null)}>
+                <DialogFooter className="gap-2 sm:gap-0">
+                  <Button variant="ghost" onClick={() => setEditingMetric(null)} className="rounded-xl">
                     Cancel
                   </Button>
-                  <Button onClick={handleMetricSave} data-testid="button-save-metric">
-                    Save
+                  <Button onClick={handleMetricSave} className="rounded-xl bg-primary hover:bg-primary/90">
+                    Save Changes
                   </Button>
                 </DialogFooter>
               </DialogContent>
             </Dialog>
 
-            {/* Basic Detail Section */}
-            <Card className="p-6 border-0 shadow-sm bg-gradient-to-br from-card to-card/50 space-y-4">
-              <h3 className="font-semibold text-lg">Basic Information</h3>
-              
-              <div className="space-y-3">
-                <Label htmlFor="fullName" className="font-medium">Full Name</Label>
-                <Input
-                  id="fullName"
-                  {...form.register("fullName")}
-                  placeholder="Enter your full name"
-                  className="rounded-lg border-border/50 focus:border-primary/50 transition-colors"
-                  data-testid="input-fullname"
-                />
-                {form.formState.errors.fullName && (
-                  <p className="text-sm text-destructive">{form.formState.errors.fullName.message}</p>
-                )}
-              </div>
+            {/* Basic Information Card */}
+                <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden">
+                    <CardHeader className="bg-muted/30 pb-4 border-b border-border/50">
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                            <User className="w-5 h-5 text-primary" />
+                            Basic Information
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-6 space-y-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="fullName" className="text-muted-foreground">Full Name</Label>
+                            <div className="relative">
+                                <User className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                id="fullName"
+                                {...form.register("fullName")}
+                                placeholder="Enter your full name"
+                                className="pl-10 h-11 rounded-xl bg-background/50 border-input/50 focus:bg-background transition-all"
+                                />
+                            </div>
+                            {form.formState.errors.fullName && (
+                                <p className="text-sm text-destructive">{form.formState.errors.fullName.message}</p>
+                            )}
+                        </div>
 
-              <div className="space-y-3">
-                <Label htmlFor="dateOfBirth" className="font-medium">Date of Birth</Label>
-                <Input
-                  id="dateOfBirth"
-                  type="date"
-                  {...form.register("dateOfBirth")}
-                  className="rounded-lg border-border/50 focus:border-primary/50 transition-colors"
-                  data-testid="input-dob"
-                />
-              </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="dateOfBirth" className="text-muted-foreground">Date of Birth</Label>
+                            <div className="relative">
+                                <Calendar className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                                <Input
+                                id="dateOfBirth"
+                                type="date"
+                                {...form.register("dateOfBirth")}
+                                className="pl-10 h-11 rounded-xl bg-background/50 border-input/50 focus:bg-background transition-all"
+                                />
+                            </div>
+                        </div>
 
-              <div className="space-y-3">
-                <Label className="font-medium">Gender</Label>
-                <div className="flex gap-4 p-3 rounded-lg bg-muted/30 border border-border/50">
-                  <RadioGroup
-                    value={form.watch("gender")}
-                    onValueChange={(value) => form.setValue("gender", value as 'male' | 'female')}
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2 flex-1">
-                      <RadioGroupItem value="male" id="male" data-testid="radio-male" />
-                      <Label htmlFor="male" className="cursor-pointer font-normal">Male</Label>
+                        <div className="space-y-2">
+                            <Label className="text-muted-foreground">Gender</Label>
+                            <RadioGroup
+                                value={form.watch("gender")}
+                                onValueChange={(value) => form.setValue("gender", value as 'male' | 'female', { shouldDirty: true })}
+                                className="grid grid-cols-2 gap-4"
+                            >
+                                <div className={`flex items-center justify-center space-x-2 border rounded-xl p-3 cursor-pointer transition-all ${form.watch("gender") === 'male' ? 'border-primary bg-primary/5' : 'border-input hover:bg-muted/50'}`}>
+                                    <RadioGroupItem value="male" id="male" />
+                                    <Label htmlFor="male" className="cursor-pointer font-medium">Male</Label>
+                                </div>
+                                <div className={`flex items-center justify-center space-x-2 border rounded-xl p-3 cursor-pointer transition-all ${form.watch("gender") === 'female' ? 'border-primary bg-primary/5' : 'border-input hover:bg-muted/50'}`}>
+                                    <RadioGroupItem value="female" id="female" />
+                                    <Label htmlFor="female" className="cursor-pointer font-medium">Female</Label>
+                                </div>
+                            </RadioGroup>
+                        </div>
+                    </CardContent>
+                </Card>
+
+            {/* Contact Information Card */}
+             <Card className="border-0 shadow-lg bg-card/50 backdrop-blur-sm overflow-hidden">
+                <CardHeader className="bg-muted/30 pb-4 border-b border-border/50">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                        <Phone className="w-5 h-5 text-primary" />
+                        Contact & Physical
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="p-6 space-y-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="phone" className="text-muted-foreground">Mobile Number</Label>
+                        <div className="relative">
+                            <span className="absolute left-3 top-2.5 text-muted-foreground font-medium">+91</span>
+                            <Input
+                            id="phone"
+                            type="tel"
+                            maxLength={10}
+                            {...form.register("phone")}
+                            placeholder="1234567890"
+                            className="pl-12 h-11 rounded-xl bg-background/50 border-input/50 focus:bg-background transition-all"
+                            />
+                        </div>
+                         {form.formState.errors.phone && (
+                            <p className="text-sm text-destructive">{form.formState.errors.phone.message}</p>
+                        )}
                     </div>
-                    <div className="flex items-center space-x-2 flex-1">
-                      <RadioGroupItem value="female" id="female" data-testid="radio-female" />
-                      <Label htmlFor="female" className="cursor-pointer font-normal">Female</Label>
+
+                    <div className="space-y-2">
+                        <Label htmlFor="email" className="text-muted-foreground">Email Address</Label>
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                            <Input
+                            id="email"
+                            type="email"
+                            {...form.register("email")}
+                            disabled
+                            className="pl-10 h-11 rounded-xl bg-muted/40 text-muted-foreground border-transparent"
+                            />
+                        </div>
                     </div>
-                  </RadioGroup>
-                </div>
-              </div>
-            </Card>
 
-            {/* Contact Detail Section */}
-            <Card className="p-6 border-0 shadow-sm bg-gradient-to-br from-card to-card/50 space-y-4">
-              <h3 className="font-semibold text-lg">Contact Information</h3>
-              
-              <div className="space-y-3">
-                <Label htmlFor="phone" className="font-medium">Mobile Number</Label>
-                <Input
-                  id="phone"
-                  type="tel"
-                  {...form.register("phone")}
-                  placeholder="+62 821 1234 1234"
-                  className="rounded-lg border-border/50 focus:border-primary/50 transition-colors"
-                  data-testid="input-phone"
-                />
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="email" className="font-medium">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  {...form.register("email")}
-                  placeholder="your.email@example.com"
-                  className="rounded-lg border-border/50 focus:border-primary/50 transition-colors"
-                  data-testid="input-email"
-                />
-                {form.formState.errors.email && (
-                  <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
-                )}
-              </div>
-            </Card>
-
-            {/* Personal Detail Section */}
-            <Card className="p-6 border-0 shadow-sm bg-gradient-to-br from-card to-card/50 space-y-4">
-              <h3 className="font-semibold text-lg">Physical Details</h3>
-              
-              <div className="space-y-3">
-                <Label htmlFor="weightKg" className="font-medium">Weight (kg)</Label>
-                <Input
-                  id="weightKg"
-                  type="number"
-                  step="0.1"
-                  {...form.register("weightKg")}
-                  placeholder="64"
-                  className="rounded-lg border-border/50 focus:border-primary/50 transition-colors"
-                  data-testid="input-weight"
-                />
-                {form.formState.errors.weightKg && (
-                  <p className="text-sm text-destructive">{form.formState.errors.weightKg.message}</p>
-                )}
-              </div>
-
-              <div className="space-y-3">
-                <Label htmlFor="heightCm" className="font-medium">Height (cm)</Label>
-                <Input
-                  id="heightCm"
-                  type="number"
-                  step="0.1"
-                  {...form.register("heightCm")}
-                  placeholder="175.5"
-                  className="rounded-lg border-border/50 focus:border-primary/50 transition-colors"
-                  data-testid="input-height"
-                />
-                {form.formState.errors.heightCm && (
-                  <p className="text-sm text-destructive">{form.formState.errors.heightCm.message}</p>
-                )}
-              </div>
-            </Card>
+                    <div className="space-y-2">
+                         <Label htmlFor="heightCm" className="text-muted-foreground">Height</Label>
+                        <div className="relative">
+                             <Ruler className="absolute left-3 top-3 w-4 h-4 text-muted-foreground" />
+                             <Input
+                                id="heightCm"
+                                type="number"
+                                step="0.1"
+                                {...form.register("heightCm")}
+                                placeholder="175.5"
+                                className="pl-10 pr-12 h-11 rounded-xl bg-background/50 border-input/50 focus:bg-background transition-all"
+                             />
+                             <span className="absolute right-4 top-3 text-muted-foreground text-sm font-medium">cm</span>
+                        </div>
+                    </div>
+                </CardContent>
+             </Card>
 
             {/* Save Button */}
-            <Button
-              type="submit"
-              className="w-full h-12 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg text-base font-semibold transition-all duration-200"
-              disabled={updateProfileMutation.isPending || uploadPhotoMutation.isPending}
-              data-testid="button-save-profile"
-            >
-              {(updateProfileMutation.isPending || uploadPhotoMutation.isPending) ? "Saving..." : "Save Changes"}
-            </Button>
+            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <Button
+                type="submit"
+                className="w-full h-14 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20 text-lg font-bold rounded-2xl transition-all duration-300"
+                disabled={updateProfileMutation.isPending || uploadPhotoMutation.isPending}
+                data-testid="button-save-profile"
+                >
+                {(updateProfileMutation.isPending || uploadPhotoMutation.isPending) ? (
+                    <span className="flex items-center gap-2">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Saving Changes...
+                    </span>
+                ) : (
+                    <span className="flex items-center gap-2">
+                        <Save className="w-5 h-5" />
+                        Save Changes
+                    </span>
+                )}
+                </Button>
+            </motion.div>
           </form>
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }
