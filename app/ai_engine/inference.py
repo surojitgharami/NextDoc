@@ -1,5 +1,6 @@
-"""AI inference engine using custom API endpoint (Colab Ngrok or HuggingFace)"""
+"""AI inference engine — Custom API endpoint (Lightning.AI / Colab Ngrok / HuggingFace)"""
 
+import re
 import httpx
 import logging
 from typing import List, Dict, Optional
@@ -9,143 +10,217 @@ from datetime import datetime
 logger = logging.getLogger(__name__)
 
 
+# ── Reasoning-token patterns to strip from ANY response ────────────────────
+_THINK_PATTERNS = [
+    re.compile(r'<think>.*?</think>', re.DOTALL | re.IGNORECASE),
+    re.compile(r'<thinking>.*?</thinking>', re.DOTALL | re.IGNORECASE),
+    re.compile(r'<think>.*?$', re.DOTALL | re.IGNORECASE),
+    re.compile(r'^.*?</think>', re.DOTALL | re.IGNORECASE),
+    re.compile(r'Medical Reasoning Process:.*?(?=\n[A-Z]|$)', re.DOTALL),
+    re.compile(r'Internal Reasoning:.*?(?=\n[A-Z]|$)', re.DOTALL),
+    re.compile(r'Chain of Thought:.*?(?=\n[A-Z]|$)', re.DOTALL),
+    re.compile(r'Step-by-step reasoning:.*?(?=\n[A-Z]|$)', re.DOTALL | re.IGNORECASE),
+    re.compile(r'Let me think.*?(?=\n[A-Z]|$)', re.DOTALL | re.IGNORECASE),
+]
+
+_RESPONSE_HEADERS = [
+    'Expert Medical Answer:', 'Medical Answer:', 'Answer:',
+    'Doctor:', 'Response:', 'Final Answer:',
+]
+
+MEDICAL_DISCLAIMER = (
+    "\n\n---\n"
+    "*This information is for educational purposes only and does not replace professional "
+    "medical advice. Please consult a qualified healthcare provider for diagnosis and treatment.*"
+)
+
+
+def clean_response(raw_output: str, add_disclaimer: bool = True) -> str:
+    """
+    Strip all reasoning / think tokens from model output.
+    Returns a clean, professional doctor response.
+    """
+    text = raw_output
+
+    for pattern in _THINK_PATTERNS:
+        text = pattern.sub('', text)
+
+    for header in _RESPONSE_HEADERS:
+        stripped = text.lstrip()
+        if stripped.startswith(header):
+            text = stripped[len(header):]
+
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    text = text.strip()
+
+    if not text:
+        text = (
+            'I was unable to generate a clear response for your question. '
+            'Please consult a qualified healthcare provider for this concern.'
+        )
+
+    if add_disclaimer:
+        text += MEDICAL_DISCLAIMER
+
+    return text
+
+
 class CustomAPIEngine:
-    """Custom AI inference engine that calls external API (Colab/HuggingFace)"""
-    
+    """
+    Inference engine that forwards requests to the Lightning.AI / Colab Ngrok
+    custom endpoint.  All responses are cleaned of reasoning tokens before
+    being returned to callers.
+    """
+
     def __init__(self):
-        """Initialize HTTP client for custom API endpoint"""
         self.api_url = settings.CUSTOM_API_URL
-        self.timeout = 120  # 2 minutes timeout for long-running inference
-    
+        self.timeout = 120
+
+    # ── Internal helpers ───────────────────────────────────────────────────
+
+    def _build_url(self) -> str:
+        url = self.api_url
+        if url and '/api/v1/chat/message' not in url:
+            url = url.rstrip('/') + '/api/v1/chat/message'
+        return url
+
+    def _build_payload(
+        self,
+        query: str,
+        previous_summary: Optional[str] = None,
+        conversation_history: Optional[List[Dict[str, str]]] = None,
+        max_tokens: int = 512,
+        temperature: float = 0.6,
+        mode: str = 'medical',
+    ) -> dict:
+        """
+        Build the JSON body sent to the inference endpoint.
+
+        Chat memory injection:
+            If previous_summary is present it is passed as 'previous_summary'
+            so the inference server can prepend:
+
+                Patient History:
+                {summary}
+
+                Current Question:
+                {query}
+
+                Provide a medical response.
+        """
+        return {
+            'message': query,
+            'previous_summary': previous_summary or '',
+            'context': conversation_history or [],
+            'max_tokens': max_tokens,
+            'temperature': temperature,
+            'mode': mode,
+        }
+
+    # ── Public interface ───────────────────────────────────────────────────
+
     async def generate_medical_response(
         self,
         query: str,
         conversation_history: Optional[List[Dict[str, str]]] = None,
-        max_tokens: int = 1200,
-        temperature: float = 0.6
+        previous_summary: Optional[str] = None,
+        max_tokens: int = 512,
+        temperature: float = 0.6,
     ) -> Dict[str, str]:
         """
-        Generate medical AI response by calling custom API endpoint.
-        
+        Generate a clean medical AI response.
+
         Args:
-            query: User's medical question
-            conversation_history: Previous messages for context
-            max_tokens: Maximum response length (ignored by custom endpoint)
-            temperature: Creativity (ignored by custom endpoint)
-        
+            query                : Patient's current message.
+            conversation_history : Recent in-session turns [{role, content}].
+            previous_summary     : Summarized history from prior sessions.
+            max_tokens           : Maximum tokens to generate.
+            temperature          : Sampling temperature.
+
         Returns:
-            Dict with 'thinking' (reasoning) and 'response' (final answer)
+            {'thinking': '', 'response': '<clean doctor reply>'}
         """
+        endpoint = self._build_url()
+        payload = self._build_payload(
+            query=query,
+            previous_summary=previous_summary,
+            conversation_history=conversation_history,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                payload = {
-                    "message": query,
-                    "context": conversation_history or [],
-                    "mode": "medical"
-                }
-                
-                response = await client.post(self.api_url, json=payload)
+                response = await client.post(endpoint, json=payload)
                 response.raise_for_status()
-                
+
                 data = response.json()
-                
-                logger.info(f"✅ Generated medical response ({len(data.get('reply', ''))} chars)")
-                return {
-                    "thinking": data.get("thinking", ""),
-                    "response": data.get("reply", "")
-                }
-                
+                raw_reply = data.get('reply', '')
+                cleaned = clean_response(raw_reply)
+
+                logger.info(f'✅ Medical response generated ({len(cleaned)} chars)')
+                return {'thinking': '', 'response': cleaned}
+
         except httpx.TimeoutException:
-            logger.error("❌ AI inference timeout: Request took too long")
+            logger.error('❌ AI inference timeout')
             return {
-                "thinking": "",
-                "response": "I apologize, but I'm taking longer than expected to process your request. Please try again."
+                'thinking': '',
+                'response': (
+                    'I apologize, but the AI service is taking longer than expected. '
+                    'Please try again in a moment.'
+                ),
             }
         except httpx.HTTPError as e:
-            logger.error(f"❌ AI inference HTTP error: {e}")
+            logger.error(f'❌ AI inference HTTP error: {e}')
             return {
-                "thinking": "",
-                "response": "I apologize, but I'm having trouble connecting to the AI service. Please try again in a moment."
+                'thinking': '',
+                'response': (
+                    'I apologize, but I am having trouble connecting to the AI service. '
+                    'Please try again shortly.'
+                ),
             }
         except Exception as e:
-            logger.error(f"❌ AI inference error: {e}")
+            logger.error(f'❌ AI inference error: {e}')
             return {
-                "thinking": "",
-                "response": "I apologize, but I'm having trouble processing your request right now. Please try again in a moment, or contact support if the issue persists."
+                'thinking': '',
+                'response': (
+                    'I apologize, but I am unable to process your request right now. '
+                    'Please try again or contact support if the issue persists.'
+                ),
             }
-    
+
     async def analyze_symptoms(
         self,
         symptoms: str,
-        max_tokens: int = 1000,
-        temperature: float = 0.5
+        max_tokens: int = 512,
+        temperature: float = 0.5,
     ) -> Dict[str, str]:
         """
-        Analyze symptoms for triage and recommendations.
-        
-        Args:
-            symptoms: Comma-separated or natural language symptom description
-            max_tokens: Maximum response length (ignored by custom endpoint)
-            temperature: Lower for more focused medical analysis (ignored by custom endpoint)
-        
-        Returns:
-            Dict with structured symptom analysis
+        Analyze symptoms — delegates to generate_medical_response with symptom_checker mode.
         """
-        try:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                payload = {
-                    "message": symptoms,
-                    "mode": "symptom_checker"
-                }
-                
-                response = await client.post(self.api_url, json=payload)
-                response.raise_for_status()
-                
-                data = response.json()
-                
-                analysis = {
-                    "raw_analysis": data.get("reply", ""),
-                    "symptoms_provided": symptoms,
-                    "urgency": self._extract_urgency(data.get("reply", "")),
-                    "reasoning": data.get("thinking", ""),
-                    "recommendations": data.get("reply", "")
-                }
-                
-                logger.info(f"✅ Symptom analysis completed")
-                return analysis
-                
-        except httpx.TimeoutException:
-            logger.error("❌ Symptom analysis timeout")
-            return {
-                "raw_analysis": "Error analyzing symptoms - service timeout",
-                "symptoms_provided": symptoms,
-                "urgency": "UNKNOWN",
-                "reasoning": "",
-                "recommendations": "Please consult a healthcare provider for symptom evaluation."
-            }
-        except Exception as e:
-            logger.error(f"❌ Symptom analysis error: {e}")
-            return {
-                "raw_analysis": "Error analyzing symptoms",
-                "symptoms_provided": symptoms,
-                "urgency": "UNKNOWN",
-                "reasoning": "",
-                "recommendations": "Please consult a healthcare provider for symptom evaluation."
-            }
-    
+        result = await self.generate_medical_response(
+            query=symptoms,
+            max_tokens=max_tokens,
+            temperature=temperature,
+        )
+        cleaned = result['response']
+        return {
+            'raw_analysis': cleaned,
+            'symptoms_provided': symptoms,
+            'urgency': self._extract_urgency(cleaned),
+            'reasoning': '',
+            'recommendations': cleaned,
+        }
+
     def _extract_urgency(self, text: str) -> str:
-        """Extract urgency level from AI response"""
         text_upper = text.upper()
-        
-        if "EMERGENCY" in text_upper:
-            return "EMERGENCY"
-        elif "URGENT" in text_upper:
-            return "URGENT"
-        elif "ROUTINE" in text_upper:
-            return "ROUTINE"
+        if 'EMERGENCY' in text_upper or '911' in text_upper or 'IMMEDIATELY' in text_upper:
+            return 'EMERGENCY'
+        elif 'URGENT' in text_upper or 'SOON AS POSSIBLE' in text_upper:
+            return 'URGENT'
         else:
-            return "ROUTINE"
+            return 'ROUTINE'
 
 
-# Global instance
+# Global singleton
 deepseek_engine = CustomAPIEngine()
