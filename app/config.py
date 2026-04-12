@@ -1,7 +1,8 @@
 """Configuration management using Pydantic BaseSettings"""
 
 from pydantic_settings import BaseSettings
-from typing import Optional
+from pydantic import field_validator
+from typing import Optional, Union
 
 
 class Settings(BaseSettings):
@@ -37,7 +38,7 @@ class Settings(BaseSettings):
     
     # API Configuration
     API_V1_PREFIX: str = "/api/v1"
-    ALLOWED_ORIGINS: list = [
+    ALLOWED_ORIGINS: Union[list, str] = [
         "http://localhost:5000",
         "http://127.0.0.1:5000",
         "http://localhost:3000",
@@ -45,6 +46,15 @@ class Settings(BaseSettings):
         "http://localhost:8000",
         "http://127.0.0.1:8000"
     ]
+
+    @field_validator("ALLOWED_ORIGINS", mode="before")
+    @classmethod
+    def parse_allowed_origins(cls, v):
+        if isinstance(v, str):
+            if v == "*":
+                return ["*"]
+            return [origin.strip() for origin in v.split(",") if origin.strip()]
+        return v
     
     # Session Configuration
     SESSION_TIMEOUT_MINUTES: int = 60

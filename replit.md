@@ -6,6 +6,14 @@ AI Doctor 3.0 (HealthChatAI) is a comprehensive medical AI chatbot platform offe
 ## User Preferences
 Preferred communication style: Simple, everyday language.
 
+## Replit Setup (April 12, 2026)
+- **Workflows configured**: Two workflows - "Backend API" (FastAPI/uvicorn on port 8000, console) and "Start application" (Vite dev server on port 5000, webview)
+- **Dependencies installed**: Python packages via pip (requirements.txt), Node packages via npm (frontend/)
+- **Environment variables**: Non-sensitive config set via Replit env vars; JWT_SECRET and ADMIN_PASSWORD stored as Replit secrets
+- **Config fix**: Updated `app/config.py` to parse `ALLOWED_ORIGINS` from a plain string or `*` wildcard (Pydantic validator added)
+- **MongoDB**: Backend starts in degraded mode without a local MongoDB instance — connect a MongoDB Atlas URI via the `MONGODB_URL` secret for full functionality
+- **Deployment**: Configured as autoscale with frontend build step and uvicorn serving on port 5000
+
 ## Recent Changes (December 4, 2025)
 - **Image Processing Microservice**: Complete standalone service for prescription OCR, pill identification, and skin analysis
 - **Backend Scan Integration**: Proxy endpoints `/api/scan/prescription`, `/api/scan/pills`, `/api/scan/skin` with timeout handling and error propagation
