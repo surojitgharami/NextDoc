@@ -55,8 +55,12 @@ async def stream_answer_only(
             "stream": True
         }
         
+        headers = {"Content-Type": "application/json"}
+        if settings.LIGHTNING_API_KEY:
+            headers["Authorization"] = f"Bearer {settings.LIGHTNING_API_KEY}"
+
         async with httpx.AsyncClient(timeout=120.0) as client:
-            async with client.stream("POST", settings.CUSTOM_API_URL, json=payload) as response:
+            async with client.stream("POST", settings.CUSTOM_API_URL, json=payload, headers=headers) as response:
                 response.raise_for_status()
                 
                 async for line in response.aiter_lines():

@@ -206,7 +206,7 @@ export default function MarkdownRenderer({ content }: Props) {
 
     if (paraLines.length > 0) {
       elements.push(
-        <p key={`p-${i}`} className="mb-3 last:mb-0 leading-relaxed text-[15px]">
+        <p key={`p-${i}`} className="mb-3 last:mb-0 leading-relaxed text-[15px] text-justify">
           {paraLines.flatMap((l, idx) => [
             ...parseInline(l),
             idx < paraLines.length - 1 ? <br key={`br-${idx}`} /> : null,

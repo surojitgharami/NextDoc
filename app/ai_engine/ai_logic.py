@@ -74,11 +74,15 @@ async def generate_medical_reply(
         'max_tokens': max_tokens,
     }
 
+    headers = {"Content-Type": "application/json"}
+    if settings.LIGHTNING_API_KEY:
+        headers["Authorization"] = f"Bearer {settings.LIGHTNING_API_KEY}"
+
     logger.info(f'🔌 Sending inference request → {endpoint_url}')
 
     try:
         async with httpx.AsyncClient(timeout=120.0) as client:
-            response = await client.post(endpoint_url, json=payload)
+            response = await client.post(endpoint_url, json=payload, headers=headers)
             response.raise_for_status()
 
             data = response.json()

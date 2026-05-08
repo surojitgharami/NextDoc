@@ -26,8 +26,9 @@ class Settings(BaseSettings):
     ADMIN_PASSWORD: Optional[str] = None
     ADMIN_NAME: str = "System Admin"
     
-    # Custom AI Endpoint (Colab Ngrok or HuggingFace Inference)
-    CUSTOM_API_URL: str = "https://unimprisoned-homogeneously-sadye.ngrok-free.dev/api/v1/chat/message"
+    # Custom AI Endpoint (Lightning.AI / Colab Ngrok / HuggingFace Inference)
+    CUSTOM_API_URL: str = "https://8000-dep-01kp3b7ttnbmqnpmpv7xpz0z59-d.cloudspaces.litng.ai"
+    LIGHTNING_API_KEY: Optional[str] = None   # Bearer token from Lightning Deployments → Settings
     
     # Voice Service Configuration
     OPENAI_API_KEY: Optional[str] = None
