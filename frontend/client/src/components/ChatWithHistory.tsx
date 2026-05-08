@@ -13,7 +13,7 @@ import MessageActions from "@/components/MessageActions";
 import ReportModal from "@/components/ReportModal";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, apiRequestFormData } from "@/lib/queryClient";
-import { parseMarkdownToJSX } from "@/utils/markdownParser.tsx";
+import MarkdownRenderer from "@/components/MarkdownRenderer";
 import { startContinuousRecording } from "@/voice/VoiceRecorderVAD";
 import { sendS2SAudio, playAudioURL } from "@/voice/s2sHelpers";
 import { 
@@ -821,10 +821,13 @@ export default function ChatWithHistory({
                             text={message.content}
                             speed={20}
                             onComplete={() => handleTypingComplete(message.id)}
-                            className="text-sm whitespace-pre-wrap"
+                            className="text-sm"
+                            renderMarkdown={true}
                           />
+                        ) : message.role === 'assistant' ? (
+                          message.content && <MarkdownRenderer content={message.content} />
                         ) : (
-                          message.content && <p className="text-sm whitespace-pre-wrap">{parseMarkdownToJSX(message.content)}</p>
+                          message.content && <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                         )}
                       </div>
                       {message.role === 'assistant' && !message.isStreaming && message.content && (

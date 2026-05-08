@@ -59,6 +59,14 @@ def clean_response(raw_output: str, add_disclaimer: bool = True) -> str:
             'Please consult a qualified healthcare provider for this concern.'
         )
 
+    # Strip any disclaimer the inference server already appended,
+    # then add exactly one clean copy (prevents duplicates when the
+    # model was trained on data that includes the disclaimer).
+    _PHRASE = 'This information is for educational purposes only'
+    idx = text.lower().find(_PHRASE.lower())
+    if idx != -1:
+        text = text[:idx].rstrip(' \t\n\r*-')
+
     if add_disclaimer:
         text += MEDICAL_DISCLAIMER
 

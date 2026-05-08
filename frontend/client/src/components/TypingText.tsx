@@ -1,17 +1,20 @@
 import { useState, useEffect } from "react";
+import MarkdownRenderer from "./MarkdownRenderer";
 
 interface TypingTextProps {
   text: string;
   speed?: number;
   onComplete?: () => void;
   className?: string;
+  renderMarkdown?: boolean;
 }
 
 export default function TypingText({ 
   text, 
   speed = 20, 
   onComplete,
-  className = ""
+  className = "",
+  renderMarkdown = false,
 }: TypingTextProps) {
   const [displayedText, setDisplayedText] = useState("");
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -28,6 +31,17 @@ export default function TypingText({
       onComplete();
     }
   }, [currentIndex, text, speed, onComplete]);
+
+  if (renderMarkdown) {
+    return (
+      <div className={className}>
+        <MarkdownRenderer content={displayedText} />
+        {currentIndex < text.length && (
+          <span className="inline-block w-[2px] h-[16px] bg-current ml-0.5 align-middle animate-pulse" />
+        )}
+      </div>
+    );
+  }
 
   return (
     <span className={className}>
